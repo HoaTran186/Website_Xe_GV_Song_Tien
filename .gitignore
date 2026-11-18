@@ -3,7 +3,7 @@ dist/
 build/
 *.log
 .env*
-backend/data/*.db
+backend/data/*.backup.db
 backend/data/*.db-journal
 backend/data/*.db-wal
 backend/data/*.db-shm
@@ -13,4 +13,3 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
-
