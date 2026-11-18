@@ -290,7 +290,7 @@ export default function CourseAllocationTab({
         teacher_id: currentTeacher.id,
         vehicle_id: selectedVehicleId ? Number(selectedVehicleId) : currentTeacher.vehicle?.id,
         student_count: Number(studentCount),
-        closing_date: allocationClosingDate,
+        closing_date: activeCourse?.closing_date ? formatDateVN(activeCourse.closing_date) : '',
         confirm_without_business_household: confirmWithoutHKD,
         notes: allocationNotes,
       });
@@ -781,41 +781,17 @@ export default function CourseAllocationTab({
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  6. Ngày Bế Giảng (dd/mm/yyyy)
-                </label>
-                <div className="flex gap-1.5">
-                  <input
-                    type="text"
-                    value={allocationClosingDate}
-                    onChange={(e) => setAllocationClosingDate(e.target.value)}
-                    placeholder="VD: 20/02/2027"
-                    className="flex-1 px-3.5 py-2 border border-slate-300 rounded-lg text-sm font-semibold"
-                  />
-                  <input
-                    type="date"
-                    value={toISODate(allocationClosingDate)}
-                    onChange={(e) => setAllocationClosingDate(formatDateVN(e.target.value))}
-                    className="w-10 px-1.5 py-2 border border-slate-300 rounded-lg text-sm cursor-pointer"
-                    title="Chọn ngày bế giảng từ lịch"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  7. Ghi chú đợt lên khóa (tùy chọn)
-                </label>
-                <input
-                  type="text"
-                  value={allocationNotes}
-                  onChange={(e) => setAllocationNotes(e.target.value)}
-                  placeholder="VD: Lên khóa đợt mới..."
-                  className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                6. Ghi chú đợt lên khóa (tùy chọn)
+              </label>
+              <input
+                type="text"
+                value={allocationNotes}
+                onChange={(e) => setAllocationNotes(e.target.value)}
+                placeholder="VD: Lên khóa đợt mới..."
+                className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm"
+              />
             </div>
 
             <button
