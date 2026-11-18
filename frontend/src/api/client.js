@@ -1,12 +1,24 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
+function getToken() {
+  try {
+    return localStorage.getItem('auth_token');
+  } catch (_) {
+    return null;
+  }
+}
+
 async function request(path, options = {}) {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {}),
+  };
+
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
     ...options,
+    headers,
   });
 
   const data = await response.json().catch(() => ({}));
@@ -20,6 +32,19 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  // Authentication
+  login: (body) => request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
+  getMe: () => request('/auth/me'),
+  logout: () => request('/auth/logout', { method: 'POST' }),
+
+  // User Management (Admin Only)
+  getUsers: () => request('/admin/users'),
+  createUser: (body) => request('/admin/users', { method: 'POST', body: JSON.stringify(body) }),
+  updateUser: (id, body) =>
+    request(`/admin/users/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteUser: (id) => request(`/admin/users/${id}`, { method: 'DELETE' }),
+
+  // Groups
   getGroups: (referenceDate) =>
     request(`/groups${referenceDate ? `?referenceDate=${encodeURIComponent(referenceDate)}` : ''}`),
   createGroup: (body) => request('/groups', { method: 'POST', body: JSON.stringify(body) }),
@@ -29,6 +54,7 @@ export const api = {
 
   getAttentionGroups: () => request('/dashboard/attention-groups'),
 
+  // Teachers
   getTeachers: ({ groupId, referenceDate } = {}) => {
     const params = new URLSearchParams();
     if (groupId) params.set('groupId', groupId);
@@ -41,6 +67,7 @@ export const api = {
     request(`/teachers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteTeacher: (id) => request(`/teachers/${id}`, { method: 'DELETE' }),
 
+  // Vehicles
   searchVehicles: (plate, referenceDate) => {
     const params = new URLSearchParams();
     if (plate) params.set('plate', plate);
@@ -52,12 +79,14 @@ export const api = {
   createVehicle: (body) => request('/vehicles', { method: 'POST', body: JSON.stringify(body) }),
   deleteVehicle: (id) => request(`/vehicles/${id}`, { method: 'DELETE' }),
 
+  // Courses
   getCourses: () => request('/courses'),
   createCourse: (body) => request('/courses', { method: 'POST', body: JSON.stringify(body) }),
   updateCourse: (id, body) =>
     request(`/courses/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteCourse: (id) => request(`/courses/${id}`, { method: 'DELETE' }),
 
+  // Allocations
   getAllocations: ({ courseId, teacherId } = {}) => {
     const params = new URLSearchParams();
     if (courseId) params.set('courseId', courseId);
@@ -71,6 +100,7 @@ export const api = {
     request(`/allocations/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteAllocation: (id) => request(`/allocations/${id}`, { method: 'DELETE' }),
 
+  // Admin Data Management
   exportAllData: () => request('/admin/export'),
   resetSeedData: () => request('/admin/reset-seed', { method: 'POST' }),
   bulkImport: (rows) =>

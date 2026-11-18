@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Calendar,
   CalendarPlus,
   UserCheck,
   AlertTriangle,
@@ -444,40 +445,43 @@ export default function CourseAllocationTab({
 
       {/* Khu vực 1: Chọn Khóa Khai Giảng & Tạo Ngày Khai Giảng Mới */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div className="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-5 sm:p-6">
+          {/* Header thanh gọn */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-blue-700" />
               <h2 className="text-base font-bold text-slate-900">
-                Đăng Ký Lên Khóa ({formatDateVN(referenceDate)})
+                Đăng Ký Lên Khóa
               </h2>
               {detectedCourseClass && (
-                <span className="px-2.5 py-0.5 bg-amber-400 text-slate-950 font-black text-xs rounded-full border border-slate-900">
-                  Khóa Hạng {detectedCourseClass}
+                <span className="px-2.5 py-0.5 bg-amber-100 text-amber-950 font-bold text-xs rounded-full border border-amber-300">
+                  Hạng {detectedCourseClass}
                 </span>
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-300 rounded-lg text-xs font-bold text-emerald-900 cursor-pointer">
+            <div className="flex items-center gap-3 text-xs">
+              <label className="flex items-center gap-1.5 text-slate-600 font-medium cursor-pointer hover:text-slate-900 select-none">
                 <input
                   type="checkbox"
                   checked={onlyShowEligibleOnDate}
                   onChange={(e) => setOnlyShowEligibleOnDate(e.target.checked)}
-                  className="w-3.5 h-3.5 text-emerald-600 rounded"
+                  className="w-3.5 h-3.5 text-blue-600 rounded"
                 />
-                Chỉ hiện Xe & GV được lên ngày {formatDateVN(referenceDate)}
+                Chỉ hiện đủ điều kiện
               </label>
 
-              <label className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 border border-indigo-200 rounded-lg text-xs font-bold text-indigo-900 cursor-pointer">
+              <span className="text-slate-300">|</span>
+
+              <label className="flex items-center gap-1.5 text-slate-600 font-medium cursor-pointer hover:text-indigo-900 select-none">
                 <input
                   type="checkbox"
                   checked={allowBorrowCrossGroup}
                   onChange={(e) => setAllowBorrowCrossGroup(e.target.checked)}
                   className="w-3.5 h-3.5 text-indigo-600 rounded"
                 />
-                <ArrowLeftRight className="w-3.5 h-3.5 text-indigo-700" />
-                Mượn GV / Xe nhóm khác
+                <ArrowLeftRight className="w-3.5 h-3.5 text-indigo-600" />
+                Cho phép mượn ngoài nhóm
               </label>
             </div>
           </div>
@@ -489,10 +493,11 @@ export default function CourseAllocationTab({
             }}
             className="space-y-4"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Hàng 1: Khóa & Nhóm */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  1. Chọn Khóa (Tự động nhận diện Hạng B1 / B2 / C1) *
+                  1. Khóa Khai Giảng *
                 </label>
                 <select
                   value={activeCourse?.id || ''}
@@ -502,14 +507,14 @@ export default function CourseAllocationTab({
                     setPendingHKDWarning(null);
                     setErrorMsg(null);
                   }}
-                  className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm font-semibold bg-blue-50/50 text-blue-950"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold bg-blue-50/50 text-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {courses.map((c) => {
                     const cClass = detectCourseClass(c.course_name);
                     return (
                       <option key={c.id} value={c.id}>
                         {formatDateVN(c.opening_date)} — {c.course_name}{' '}
-                        {cClass ? `[Hạng ${cClass}]` : ''} — ({c.total_students || 0} học viên)
+                        {cClass ? `[${cClass}]` : ''} ({c.total_students || 0} HV)
                       </option>
                     );
                   })}
@@ -518,7 +523,7 @@ export default function CourseAllocationTab({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  2. Nhóm Giáo Viên Đứng Tên Lên Khóa *
+                  2. Nhóm Lên Khóa *
                 </label>
                 <select
                   value={allocatingGroupId}
@@ -526,21 +531,27 @@ export default function CourseAllocationTab({
                     setAllocatingGroupId(e.target.value);
                     setPendingHKDWarning(null);
                   }}
-                  className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm bg-white font-semibold"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {groupsWithQuota.map((g) => (
                     <option key={g.id} value={g.id}>
-                      {g.name} (Đủ ĐK lên ngày này: {g.available_now_quota} HV)
+                      {g.name} (Được lên: {g.available_now_quota} HV)
                     </option>
                   ))}
                 </select>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-              <div className="sm:col-span-5">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  3. Chọn Giáo Viên {effectiveClassFilter ? `(Lọc Hạng ${effectiveClassFilter})` : ''} *
+            {/* Hàng 2: Giáo Viên & Xe */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>3. Giáo Viên *</span>
+                  {effectiveClassFilter && (
+                    <span className="text-[11px] font-normal text-slate-500">
+                      Hạng {effectiveClassFilter}
+                    </span>
+                  )}
                 </label>
                 <select
                   value={selectedTeacherId}
@@ -562,41 +573,33 @@ export default function CourseAllocationTab({
                       }
                     }
                   }}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white font-medium"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {selectableTeachers.length === 0 && (
                     <option value="">
-                      -- Không có Giáo viên {effectiveClassFilter ? `hạng ${effectiveClassFilter}` : ''} đủ ĐK ngày {formatDateVN(referenceDate)} --
+                      -- Không có GV {effectiveClassFilter ? `hạng ${effectiveClassFilter}` : ''} đủ điều kiện --
                     </option>
                   )}
                   {sameGroupTeachers.length > 0 && (
-                    <optgroup label="--- Giáo viên thuộc nhóm đang chọn ---">
+                    <optgroup label="Giáo viên trong nhóm">
                       {sameGroupTeachers.map((t) => (
                         <option key={t.id} value={t.id}>
-                          {t.quota_status.can_enroll_on_reference_date
-                            ? '✅ [Đủ ĐK]'
-                            : '⛔ [Chưa đủ 6T/3T]'}{' '}
+                          {t.quota_status.can_enroll_on_reference_date ? '✓' : '⛔'}{' '}
                           {t.full_name}{' '}
-                          {t.vehicle
-                            ? `(${t.vehicle.license_plate} - Hạng ${t.vehicle.vehicle_class})`
-                            : '(Chưa có xe)'}{' '}
-                          — Được lên: {t.quota_status.remaining_quota} HV
+                          {t.vehicle ? `(Xe ${t.vehicle.license_plate})` : '(Chưa có xe)'} — [Còn:{' '}
+                          {t.quota_status.remaining_quota} HV]
                         </option>
                       ))}
                     </optgroup>
                   )}
                   {allowBorrowCrossGroup && otherGroupTeachers.length > 0 && (
-                    <optgroup label="--- Mượn nhờ tên Giáo viên từ nhóm khác ---">
+                    <optgroup label="Mượn giáo viên nhóm khác">
                       {otherGroupTeachers.map((t) => (
                         <option key={t.id} value={t.id}>
-                          {t.quota_status.can_enroll_on_reference_date
-                            ? `✅ [Mượn từ ${t.group_name}]`
-                            : `⛔ [Chưa đủ 6T/3T - ${t.group_name}]`}{' '}
-                          {t.full_name}{' '}
-                          {t.vehicle
-                            ? `(${t.vehicle.license_plate} - Hạng ${t.vehicle.vehicle_class})`
-                            : ''}{' '}
-                          — Được lên: {t.quota_status.remaining_quota} HV
+                          {t.quota_status.can_enroll_on_reference_date ? '✓' : '⛔'} [Mượn từ{' '}
+                          {t.group_name}] {t.full_name}{' '}
+                          {t.vehicle ? `(Xe ${t.vehicle.license_plate})` : ''} — [Còn:{' '}
+                          {t.quota_status.remaining_quota} HV]
                         </option>
                       ))}
                     </optgroup>
@@ -604,9 +607,14 @@ export default function CourseAllocationTab({
                 </select>
               </div>
 
-              <div className="sm:col-span-5">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  4. Chọn Xe Đào Tạo {effectiveClassFilter ? `(Chỉ Xe Hạng ${effectiveClassFilter})` : ''} *
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>4. Xe Tập Lái *</span>
+                  {effectiveClassFilter && (
+                    <span className="text-[11px] font-normal text-slate-500">
+                      Hạng {effectiveClassFilter}
+                    </span>
+                  )}
                 </label>
                 <select
                   value={selectedVehicleId}
@@ -614,142 +622,147 @@ export default function CourseAllocationTab({
                     setSelectedVehicleId(e.target.value);
                     setPendingHKDWarning(null);
                   }}
-                  className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-xs bg-white font-semibold"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {selectableVehicles.length === 0 && (
                     <option value="">
-                      -- Không có Xe {effectiveClassFilter ? `hạng ${effectiveClassFilter}` : ''} đủ ĐK ngày {formatDateVN(referenceDate)} --
+                      -- Không có Xe {effectiveClassFilter ? `hạng ${effectiveClassFilter}` : ''} đủ điều kiện --
                     </option>
                   )}
                   {sameGroupVehicles.length > 0 && (
-                    <optgroup label="--- Xe thuộc nhóm đang chọn ---">
+                    <optgroup label="Xe trong nhóm">
                       {sameGroupVehicles.map((v) => (
                         <option key={v.id} value={v.id}>
-                          {v.quota_status.can_enroll_on_reference_date
-                            ? '✅ [Đủ ĐK]'
-                            : '⛔ [Chưa đủ 6T/3T]'}{' '}
-                          {v.license_plate} [Hạng {v.vehicle_class}] —{' '}
-                          {v.teacher_name ? `GV: ${v.teacher_name}` : 'Xe trống GV'} — Được lên:{' '}
-                          {v.quota_status.remaining_quota} HV
+                          {v.quota_status.can_enroll_on_reference_date ? '✓' : '⛔'}{' '}
+                          {v.license_plate} (Hạng {v.vehicle_class}) — [Còn:{' '}
+                          {v.quota_status.remaining_quota} HV]
                         </option>
                       ))}
                     </optgroup>
                   )}
                   {allowBorrowCrossGroup && otherGroupVehicles.length > 0 && (
-                    <optgroup label="--- Mượn Xe từ nhóm khác ---">
+                    <optgroup label="Mượn xe nhóm khác">
                       {otherGroupVehicles.map((v) => (
                         <option key={v.id} value={v.id}>
-                          {v.quota_status.can_enroll_on_reference_date
-                            ? `✅ [Mượn từ ${v.group_name}]`
-                            : `⛔ [Chưa đủ 6T/3T - ${v.group_name}]`}{' '}
-                          {v.license_plate} [Hạng {v.vehicle_class}] — Được lên:{' '}
-                          {v.quota_status.remaining_quota} HV
+                          {v.quota_status.can_enroll_on_reference_date ? '✓' : '⛔'} [Mượn từ{' '}
+                          {v.group_name}] {v.license_plate} (Hạng {v.vehicle_class}) — [Còn:{' '}
+                          {v.quota_status.remaining_quota} HV]
                         </option>
                       ))}
                     </optgroup>
                   )}
                 </select>
               </div>
+            </div>
 
-              <div className="sm:col-span-2">
+            {/* Hàng 3: Số Lượng Học Viên & Ghi Chú */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  5. Số HV Lên *
+                  5. Số Lượng Học Viên Lên *
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={studentCount}
+                    onChange={(e) => setStudentCount(Math.min(5, Math.max(1, Number(e.target.value))))}
+                    className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-base font-black text-center text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {/* Nút bấm nhanh 1, 2, 3, 4, 5 cực tiện lợi */}
+                  <div className="flex gap-1 flex-1">
+                    {[1, 2, 3, 4, 5].map((num) => (
+                      <button
+                        type="button"
+                        key={num}
+                        onClick={() => setStudentCount(num)}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg border transition ${
+                          Number(studentCount) === num
+                            ? 'bg-blue-700 text-white border-blue-700 shadow-2xs'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {num} HV
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  6. Ghi Chú (Tùy chọn)
                 </label>
                 <input
-                  type="number"
-                  min={1}
-                  max={5}
-                  value={studentCount}
-                  onChange={(e) => setStudentCount(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-bold text-blue-900"
+                  type="text"
+                  value={allocationNotes}
+                  onChange={(e) => setAllocationNotes(e.target.value)}
+                  placeholder="Ghi chú thêm nếu có..."
+                  className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
 
-            {/* Thông báo khi đang thực hiện Mượn Giáo Viên hoặc Mượn Xe từ nhóm khác */}
+            {/* Trạng thái mượn liên nhóm (chỉ hiện khi có mượn) */}
             {(isBorrowingTeacher || isBorrowingVehicle) && (
-              <div className="p-3.5 bg-indigo-50 border-2 border-indigo-300 rounded-xl text-xs text-indigo-950 flex items-start gap-2.5">
-                <ArrowLeftRight className="w-5 h-5 text-indigo-700 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-sm text-indigo-900">
-                    Chế độ Mượn Liên Nhóm cho "{currentAllocatingGroup?.name}":
-                  </p>
-                  <ul className="list-disc list-inside mt-1 space-y-0.5">
-                    {isBorrowingTeacher && (
-                      <li>
-                        Đang <strong>mượn nhờ tên Giáo viên "{currentTeacher.full_name}"</strong> thuộc{' '}
-                        <strong>{currentTeacher.group_name}</strong> (Được lên:{' '}
-                        {currentTeacher.quota_status.remaining_quota} HV).
-                      </li>
-                    )}
-                    {isBorrowingVehicle && (
-                      <li>
-                        Đang <strong>mượn Xe biển số "{currentVehicle.license_plate}"</strong> (Hạng{' '}
-                        {currentVehicle.vehicle_class}) thuộc <strong>{currentVehicle.group_name}</strong>.
-                      </li>
-                    )}
-                  </ul>
-                </div>
+              <div className="px-3.5 py-2 bg-indigo-50 border border-indigo-200 rounded-lg text-xs text-indigo-950 flex items-center gap-2">
+                <ArrowLeftRight className="w-4 h-4 text-indigo-600 shrink-0" />
+                <span>
+                  <strong>Đang mượn liên nhóm:</strong>{' '}
+                  {isBorrowingTeacher && `GV ${currentTeacher.full_name} (${currentTeacher.group_name})`}
+                  {isBorrowingTeacher && isBorrowingVehicle && ' • '}
+                  {isBorrowingVehicle && `Xe ${currentVehicle?.license_plate} (${currentVehicle?.group_name})`}
+                </span>
               </div>
             )}
 
-            {/* Hộp hiển thị Trạng thái Định mức 5 HV / Chờ 3 tuần / Quay đầu 6 tuần & Cảnh báo HKD */}
+            {/* Thanh trạng thái kiểm tra điều kiện (gọn gàng, tinh tế) */}
             {currentTeacher && (
-              <div className="space-y-3">
-                <div
-                  className={`p-3.5 rounded-xl border text-xs ${
-                    canBothEnroll
-                      ? 'bg-blue-50 border-blue-200 text-blue-950'
-                      : 'bg-red-50 border-2 border-red-400 text-red-950'
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 font-bold text-sm mb-1">
+              canBothEnroll ? (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-2 text-xs text-emerald-950">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>
-                      GV: {currentTeacher.full_name} + Xe:{' '}
-                      {currentVehicle
-                        ? `${currentVehicle.license_plate} (Hạng ${currentVehicle.vehicle_class})`
-                        : 'Chưa chọn'}
+                      <strong>Đủ điều kiện:</strong> {currentTeacher.full_name} + {currentVehicle?.license_plate || 'Chưa chọn xe'} sẵn sàng lên khóa.
                     </span>
-                    <span className="px-2.5 py-0.5 bg-white rounded-full border border-current">
-                      Đã lên: {currentTeacher.quota_status.used_quota}/
-                      {currentTeacher.quota_status.max_quota} HV • Còn lại được lên:{' '}
-                      <strong>{currentTeacher.quota_status.remaining_quota} HV</strong>
-                    </span>
+                  </div>
+                  <span className="px-2.5 py-0.5 bg-white border border-emerald-300 rounded-full font-bold text-emerald-800 text-[11px] whitespace-nowrap shadow-2xs">
+                    Được lên: {currentTeacher.quota_status.remaining_quota} HV
+                  </span>
+                </div>
+              ) : (
+                <div className="p-3.5 bg-red-50 border-2 border-red-300 rounded-xl text-xs text-red-950 space-y-1">
+                  <div className="flex items-center gap-2 font-bold text-sm text-red-700">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>Không đủ điều kiện lên khóa</span>
                   </div>
                   {!vehicleMatchesCourseClass && (
-                    <p className="mt-1 font-bold text-red-700">
-                      • ⛔ Sai hạng xe: Khóa "{activeCourse?.course_name}" là Hạng {detectedCourseClass}, nhưng xe {currentVehicle?.license_plate} là Hạng {currentVehicle?.vehicle_class}!
+                    <p className="font-semibold text-red-800">
+                      • Sai hạng xe: Khóa "{activeCourse?.course_name}" là Hạng {detectedCourseClass}, nhưng xe {currentVehicle?.license_plate} là Hạng {currentVehicle?.vehicle_class}.
                     </p>
                   )}
-                  <p className="mt-1 font-medium">
-                    • <strong>Giáo viên ({currentTeacher.full_name}):</strong>{' '}
-                    {currentTeacher.quota_status.status_message}
-                  </p>
-                  {currentVehicle && (
-                    <p className="mt-1 font-medium">
-                      • <strong>Xe ({currentVehicle.license_plate} - Hạng {currentVehicle.vehicle_class}):</strong>{' '}
-                      {currentVehicle.quota_status.status_message}
-                    </p>
+                  {!currentTeacher.quota_status.can_enroll_on_reference_date && (
+                    <p>• GV ({currentTeacher.full_name}): {currentTeacher.quota_status.status_message}</p>
+                  )}
+                  {currentVehicle && !currentVehicle.quota_status.can_enroll_on_reference_date && (
+                    <p>• Xe ({currentVehicle.license_plate}): {currentVehicle.quota_status.status_message}</p>
                   )}
                 </div>
-
-                {(currentTeacher.quota_status.business_household_warning ||
-                  (currentAllocatingGroup && !currentAllocatingGroup.has_business_household)) && (
-                  <div className="p-3.5 bg-amber-50 border-2 border-amber-400 rounded-xl flex items-start gap-2.5 text-amber-950">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                    <div className="text-xs">
-                      <p className="font-bold text-sm">
-                        {currentTeacher.quota_status.business_household_warning_message ||
-                          `Cảnh báo: Nhóm "${currentAllocatingGroup?.name}" chưa có Hộ Kinh Doanh!`}
-                      </p>
-                      <p className="mt-0.5">
-                        Khi bấm lên khóa, hệ thống sẽ yêu cầu xác nhận cảnh báo chưa có Hộ Kinh Doanh.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
+              )
             )}
+
+            {/* Cảnh báo chưa có Hộ Kinh Doanh nếu có */}
+            {currentTeacher &&
+              (currentTeacher.quota_status.business_household_warning ||
+                (currentAllocatingGroup && !currentAllocatingGroup.has_business_household)) && (
+                <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl flex items-center gap-2 text-xs text-amber-950">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>
+                    <strong>Lưu ý:</strong> {currentTeacher.quota_status.business_household_warning_message || `Nhóm "${currentAllocatingGroup?.name}" chưa có Hộ Kinh Doanh.`}
+                  </span>
+                </div>
+              )}
 
             {pendingHKDWarning && (
               <div className="p-4 bg-amber-100 border-2 border-amber-500 rounded-xl space-y-3">
@@ -768,7 +781,7 @@ export default function CourseAllocationTab({
                     onClick={() => submitAllocation(true)}
                     className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg"
                   >
-                    Vẫn Xác Nhận Lên Khóa (Ghi Nhận Cảnh Báo HKD)
+                    Vẫn Xác Nhận Lên Khóa (Kèm Cảnh Báo HKD)
                   </button>
                   <button
                     type="button"
@@ -781,35 +794,19 @@ export default function CourseAllocationTab({
               </div>
             )}
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                6. Ghi chú đợt lên khóa (tùy chọn)
-              </label>
-              <input
-                type="text"
-                value={allocationNotes}
-                onChange={(e) => setAllocationNotes(e.target.value)}
-                placeholder="VD: Lên khóa đợt mới..."
-                className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm"
-              />
-            </div>
-
+            {/* Nút bấm Submit rõ ràng, thân thiện */}
             <button
               type="submit"
               disabled={!canBothEnroll}
               className={`w-full py-2.5 font-bold text-sm rounded-lg shadow-sm transition ${
                 canBothEnroll
-                  ? 'bg-blue-700 hover:bg-blue-800 text-white'
-                  : 'bg-red-200 text-red-900 cursor-not-allowed border border-red-400'
+                  ? 'bg-blue-700 hover:bg-blue-800 text-white cursor-pointer'
+                  : 'bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300'
               }`}
             >
               {canBothEnroll
-                ? `Xác Nhận Lên Khóa ${activeCourse?.course_name || ''} ${
-                    detectedCourseClass ? `[Hạng ${detectedCourseClass}]` : ''
-                  } (Ngày ${formatDateVN(referenceDate)})`
-                : `⛔ Không Thể Lên Khóa (Chưa Đủ 6T/3T Hoặc Không Có Xe Hạng ${
-                    effectiveClassFilter || ''
-                  } Đủ ĐK Tại Ngày ${formatDateVN(referenceDate)})`}
+                ? `✓ Xác Nhận Lên Khóa Cho Giáo Viên Này (${studentCount} Học Viên)`
+                : '⛔ Chưa Đủ Điều Kiện Lên Khóa (Xem Chi Tiết Ở Trên)'}
             </button>
           </form>
         </div>
@@ -843,48 +840,58 @@ export default function CourseAllocationTab({
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Ngày Khai Giảng (dd/mm/yyyy) *
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Ngày Khai Giảng *</span>
+                  <span className="text-[11px] font-normal text-slate-400">dd/mm/yyyy</span>
                 </label>
-                <div className="flex gap-1.5">
+                <div className="relative flex items-center">
                   <input
                     type="text"
                     required
                     value={newOpeningDate}
                     onChange={(e) => setNewOpeningDate(e.target.value)}
-                    placeholder="VD: 10/12/2026"
-                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold"
+                    placeholder="10/12/2026"
+                    className="w-full pl-3.5 pr-10 py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-2xs transition"
                   />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-emerald-600">
+                    <Calendar className="w-4 h-4" />
+                  </div>
                   <input
                     type="date"
+                    tabIndex={-1}
                     value={toISODate(newOpeningDate)}
                     onChange={(e) => setNewOpeningDate(formatDateVN(e.target.value))}
-                    className="w-10 px-1.5 py-2 border border-slate-300 rounded-lg text-sm cursor-pointer"
-                    title="Chọn ngày khai giảng"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 opacity-0 cursor-pointer"
+                    title="Chọn ngày khai giảng từ lịch"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Ngày Bế Giảng (dd/mm/yyyy)
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Ngày Bế Giảng</span>
+                  <span className="text-[11px] font-normal text-slate-400">dd/mm/yyyy</span>
                 </label>
-                <div className="flex gap-1.5">
+                <div className="relative flex items-center">
                   <input
                     type="text"
                     value={newClosingDate}
                     onChange={(e) => setNewClosingDate(e.target.value)}
-                    placeholder="VD: 15/03/2027"
-                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold"
+                    placeholder="15/03/2027"
+                    className="w-full pl-3.5 pr-10 py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 shadow-2xs transition"
                   />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-purple-600">
+                    <Calendar className="w-4 h-4" />
+                  </div>
                   <input
                     type="date"
+                    tabIndex={-1}
                     value={toISODate(newClosingDate)}
                     onChange={(e) => setNewClosingDate(formatDateVN(e.target.value))}
-                    className="w-10 px-1.5 py-2 border border-slate-300 rounded-lg text-sm cursor-pointer"
-                    title="Chọn ngày bế giảng"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 opacity-0 cursor-pointer"
+                    title="Chọn ngày bế giảng từ lịch"
                   />
                 </div>
               </div>

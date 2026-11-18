@@ -107,6 +107,33 @@ function runSafeMigrations(db) {
       db.exec("ALTER TABLE course_allocations ADD COLUMN borrow_note TEXT DEFAULT '';");
     }
   }
+
+  // Đảm bảo có bảng users và user_sessions
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE CHECK(length(trim(username)) >= 3),
+        password_hash TEXT NOT NULL,
+        salt TEXT NOT NULL,
+        full_name TEXT NOT NULL CHECK(length(trim(full_name)) >= 2),
+        role TEXT NOT NULL DEFAULT 'user' CHECK(role IN ('admin', 'user')),
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS user_sessions (
+        token TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+  `);
+
+  try {
+    const { seedDefaultUsers } = require('../services/authService');
+    seedDefaultUsers(db);
+  } catch (err) {
+    console.error('Error seeding default users:', err);
+  }
 }
 
 function getDb(customPath) {

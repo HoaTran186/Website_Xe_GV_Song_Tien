@@ -9,12 +9,14 @@ import {
   Upload,
   CheckCircle2,
   AlertTriangle,
+  Calendar,
+  ArrowLeft,
 } from 'lucide-react';
 import { api } from '../api/client';
 import { downloadTableSampleExcel, parseExcelFileToRows } from './ExcelImportBox';
 import { formatDateVN, toISODate } from '../utils/dateFormat';
 
-export default function AdminDataManagerTab({ groups, teachers, courses, onRefreshAll }) {
+export default function AdminDataManagerTab({ groups, teachers, courses, onRefreshAll, onBackToUser }) {
   const [subTab, setSubTab] = useState('all');
   const [allocations, setAllocations] = useState([]);
   const [statusMsg, setStatusMsg] = useState(null);
@@ -60,6 +62,16 @@ export default function AdminDataManagerTab({ groups, teachers, courses, onRefre
     notes: '',
   });
 
+  // State Quản lý Tài khoản người dùng (Chỉ Admin)
+  const [userList, setUserList] = useState([]);
+  const [userForm, setUserForm] = useState({
+    id: null,
+    username: '',
+    password: '',
+    full_name: '',
+    role: 'user',
+  });
+
   const loadAllocations = async () => {
     try {
       const list = await api.getAllocations();
@@ -69,9 +81,62 @@ export default function AdminDataManagerTab({ groups, teachers, courses, onRefre
     }
   };
 
+  const loadUsers = async () => {
+    try {
+      const list = await api.getUsers();
+      setUserList(list);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     loadAllocations();
+    loadUsers();
   }, [courses, teachers]);
+
+  const handleSaveUser = async (e) => {
+    e.preventDefault();
+    try {
+      if (userForm.id) {
+        await api.updateUser(userForm.id, {
+          full_name: userForm.full_name,
+          role: userForm.role,
+          password: userForm.password || undefined,
+        });
+        notify(`Đã cập nhật tài khoản "${userForm.username}" thành công!`);
+      } else {
+        await api.createUser({
+          username: userForm.username,
+          password: userForm.password,
+          full_name: userForm.full_name,
+          role: userForm.role,
+        });
+        notify(`Đã tạo tài khoản mới "${userForm.username}" thành công!`);
+      }
+      setUserForm({
+        id: null,
+        username: '',
+        password: '',
+        full_name: '',
+        role: 'user',
+      });
+      loadUsers();
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
+  };
+
+  const handleDeleteUser = async (id, uName) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa tài khoản "${uName}" không?`)) return;
+    try {
+      await api.deleteUser(id);
+      notify(`Đã xóa tài khoản "${uName}".`);
+      loadUsers();
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
+  };
 
   const notify = (msg) => {
     setErrorMsg(null);
@@ -333,9 +398,13 @@ export default function AdminDataManagerTab({ groups, teachers, courses, onRefre
     <div className="space-y-6">
       {/* Header Admin */}
       <div className="bg-slate-900 text-white rounded-xl p-6 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2.5 bg-amber-400 text-slate-950 rounded-xl">
-            <Database className="w-6 h-6" />
+        <div className="flex items-start gap-3.5">
+          <div className="bg-white p-1 rounded-xl shadow shrink-0 flex items-center justify-center">
+            <img
+              src="/logo-song-tien.jpg"
+              alt="Logo Sông Tiền"
+              className="w-11 h-11 object-contain rounded-lg"
+            />
           </div>
           <div>
             <h2 className="text-lg font-bold">
@@ -348,6 +417,15 @@ export default function AdminDataManagerTab({ groups, teachers, courses, onRefre
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {onBackToUser && (
+            <button
+              onClick={onBackToUser}
+              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow transition"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              ← Về Trang Chính (Lên Khóa)
+            </button>
+          )}
           <button
             onClick={handleExportJSON}
             className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5"
@@ -382,10 +460,11 @@ export default function AdminDataManagerTab({ groups, teachers, courses, onRefre
       {/* Chọn bảng dữ liệu cần sửa */}
       <div className="flex flex-wrap gap-2">
         {[
-          { id: 'all', label: 'Hiển Thị Tất Cả 4 Bảng Dữ Liệu' },
-          { id: 'teachers', label: `1. Sửa Giáo Viên & Xe (${teachers.length})` },
-          { id: 'groups', label: `2. Sửa Nhóm Giáo Viên (${groups.length})` },
-          { id: 'courses', label: `3. Sửa Khóa / Ngày Khai Giảng (${courses.length})` },
+          { id: 'all', label: 'Tất Cả Phân Hệ' },
+          { id: 'users', label: `👤 Quản Lý Tài Khoản (${userList.length})` },
+          { id: 'courses', label: `1. Khóa / Ngày Khai Giảng (${courses.length})` },
+          { id: 'teachers', label: `2. Giáo Viên & Xe (${teachers.length})` },
+          { id: 'groups', label: `3. Nhóm Giáo Viên (${groups.length})` },
           { id: 'allocations', label: `4. Sửa Bản Ghi Lên Khóa (${allocations.length})` },
         ].map((item) => (
           <button
@@ -401,6 +480,178 @@ export default function AdminDataManagerTab({ groups, teachers, courses, onRefre
           </button>
         ))}
       </div>
+
+      {/* PHÂN HỆ QUẢN LÝ TÀI KHOẢN NGƯỜI DÙNG & PHÂN QUYỀN (CHỈ ADMIN) */}
+      {(subTab === 'all' || subTab === 'users') && (
+        <div className="space-y-4">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                {userForm.id ? (
+                  <>
+                    <Edit3 className="w-4 h-4 text-amber-600" />
+                    Đang Chỉnh Sửa Tài Khoản: {userForm.username}
+                  </>
+                ) : (
+                  <>
+                    <PlusCircle className="w-4 h-4 text-blue-700" />
+                    Tạo Tài Khoản Mới & Phân Quyền Truy Cập
+                  </>
+                )}
+              </h3>
+            </div>
+
+            <form onSubmit={handleSaveUser} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Tên Đăng Nhập *
+                </label>
+                <input
+                  type="text"
+                  required
+                  disabled={Boolean(userForm.id)}
+                  value={userForm.username}
+                  onChange={(e) => setUserForm({ ...userForm, username: e.target.value.toLowerCase() })}
+                  placeholder="VD: tranvan_a"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold disabled:bg-slate-100 disabled:text-slate-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  {userForm.id ? 'Mật Khẩu Mới (để trống nếu giữ nguyên)' : 'Mật Khẩu *'}
+                </label>
+                <input
+                  type="password"
+                  required={!userForm.id}
+                  value={userForm.password}
+                  onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                  placeholder={userForm.id ? 'Để trống nếu giữ nguyên' : 'Nhập mật khẩu...'}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Họ Và Tên Người Dùng *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={userForm.full_name}
+                  onChange={(e) => setUserForm({ ...userForm, full_name: e.target.value })}
+                  placeholder="VD: Trần Văn A"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Quyền Hạn Vào Hệ Thống *
+                </label>
+                <select
+                  value={userForm.role}
+                  onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-bold bg-white"
+                >
+                  <option value="user">👤 Người Dùng (Không được vào Admin)</option>
+                  <option value="admin">👑 Quản Trị Viên (Vào Admin + Phân quyền)</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 py-2 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-lg transition cursor-pointer"
+                >
+                  {userForm.id ? 'Cập Nhật' : '+ Tạo Tài Khoản'}
+                </button>
+                {userForm.id && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setUserForm({
+                        id: null,
+                        username: '',
+                        password: '',
+                        full_name: '',
+                        role: 'user',
+                      })
+                    }
+                    className="px-3 py-2 bg-slate-200 text-slate-700 font-bold text-xs rounded-lg hover:bg-slate-300 cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+            <table className="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
+                  <th className="p-3">ID</th>
+                  <th className="p-3">Tên Đăng Nhập</th>
+                  <th className="p-3">Họ Tên</th>
+                  <th className="p-3">Quyền Hạn</th>
+                  <th className="p-3">Trạng Thái Truy Cập Admin</th>
+                  <th className="p-3 text-right">Sửa / Xóa</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {userList.map((u) => (
+                  <tr key={u.id} className="hover:bg-slate-50">
+                    <td className="p-3 font-bold">#{u.id}</td>
+                    <td className="p-3 font-bold text-slate-900 font-mono">{u.username}</td>
+                    <td className="p-3 font-bold text-blue-900">{u.full_name}</td>
+                    <td className="p-3">
+                      {u.role === 'admin' ? (
+                        <span className="px-2.5 py-1 bg-amber-100 border border-amber-300 text-amber-900 font-black rounded-full text-[11px]">
+                          👑 Quản Trị Viên (Admin)
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-800 font-bold rounded-full text-[11px]">
+                          👤 Người Dùng (Cán Bộ)
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      {u.role === 'admin' ? (
+                        <span className="text-emerald-700 font-bold">✓ Được vào Quản Trị & Tạo tài khoản</span>
+                      ) : (
+                        <span className="text-slate-400 font-medium italic">⛔ Bị chặn, không được vào Quản Trị</span>
+                      )}
+                    </td>
+                    <td className="p-3 text-right space-x-1.5 whitespace-nowrap">
+                      <button
+                        onClick={() =>
+                          setUserForm({
+                            id: u.id,
+                            username: u.username,
+                            password: '',
+                            full_name: u.full_name,
+                            role: u.role,
+                          })
+                        }
+                        className="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold rounded cursor-pointer"
+                      >
+                        Sửa
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(u.id, u.username)}
+                        className="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded cursor-pointer"
+                      >
+                        Xóa
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* BẢNG 1: SỬA GIÁO VIÊN & XE */}
       {(subTab === 'all' || subTab === 'teachers') && (
@@ -775,45 +1026,59 @@ export default function AdminDataManagerTab({ groups, teachers, courses, onRefre
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Ngày Khai Giảng (dd/mm/yyyy) *</label>
-                <div className="flex gap-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Ngày Khai Giảng *</span>
+                  <span className="text-[10px] font-normal text-slate-400">dd/mm/yyyy</span>
+                </label>
+                <div className="relative flex items-center">
                   <input
                     type="text"
                     required
                     value={courseForm.opening_date}
                     onChange={(e) => setCourseForm({ ...courseForm, opening_date: e.target.value })}
                     placeholder="VD: 16/11/2026"
-                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold"
+                    className="w-full pl-3 pr-9 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-blue-600">
+                    <Calendar className="w-3.5 h-3.5" />
+                  </div>
                   <input
                     type="date"
+                    tabIndex={-1}
                     value={toISODate(courseForm.opening_date)}
                     onChange={(e) =>
                       setCourseForm({ ...courseForm, opening_date: formatDateVN(e.target.value) })
                     }
-                    className="w-10 px-1.5 py-2 border border-slate-300 rounded-lg text-xs cursor-pointer"
-                    title="Chọn từ lịch"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 opacity-0 cursor-pointer"
+                    title="Chọn ngày khai giảng từ lịch"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Ngày Bế Giảng (dd/mm/yyyy)</label>
-                <div className="flex gap-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Ngày Bế Giảng</span>
+                  <span className="text-[10px] font-normal text-slate-400">dd/mm/yyyy</span>
+                </label>
+                <div className="relative flex items-center">
                   <input
                     type="text"
                     value={courseForm.closing_date || ''}
                     onChange={(e) => setCourseForm({ ...courseForm, closing_date: e.target.value })}
                     placeholder="VD: 20/02/2027"
-                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold"
+                    className="w-full pl-3 pr-9 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-purple-600">
+                    <Calendar className="w-3.5 h-3.5" />
+                  </div>
                   <input
                     type="date"
+                    tabIndex={-1}
                     value={toISODate(courseForm.closing_date)}
                     onChange={(e) =>
                       setCourseForm({ ...courseForm, closing_date: formatDateVN(e.target.value) })
                     }
-                    className="w-10 px-1.5 py-2 border border-slate-300 rounded-lg text-xs cursor-pointer"
-                    title="Chọn ngày bế giảng"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 opacity-0 cursor-pointer"
+                    title="Chọn ngày bế giảng từ lịch"
                   />
                 </div>
               </div>
