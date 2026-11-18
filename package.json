@@ -1,0 +1,13 @@
+{
+  "name": "website-xe-gv-song-tien",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Hệ thống Quản lý Xe, Giáo viên & Khai giảng Sông Tiền (Node.js + React)",
+  "scripts": {
+    "backend": "npm --prefix backend start",
+    "backend:dev": "npm --prefix backend run dev",
+    "frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "test": "npm --prefix backend test"
+  }
+}
