@@ -18,6 +18,25 @@ import { api } from '../api/client';
 import { downloadTableSampleExcel, parseExcelFileToRows } from './ExcelImportBox';
 import { formatDateVN, toISODate } from '../utils/dateFormat';
 
+function highlightMatch(text, query) {
+  if (!text && text !== 0) return '';
+  if (!query || !query.trim()) return text;
+  const q = query.trim();
+  const str = String(text);
+  const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = str.split(regex);
+  if (parts.length === 1) return str;
+  return parts.map((part, i) =>
+    part.toLowerCase() === q.toLowerCase() ? (
+      <mark key={i} className="bg-amber-300 text-slate-950 font-bold px-1 py-0.5 rounded shadow-2xs">
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
+}
+
 export default function AdminDataManagerTab({
   groups = [],
   teachers = [],
@@ -26,16 +45,20 @@ export default function AdminDataManagerTab({
   onBackToUser,
 }) {
   const [subTab, setSubTab] = useState('all');
-  const [adminSearch, setAdminSearch] = useState('');
+  const [teacherSearch, setTeacherSearch] = useState('');
+  const [groupSearch, setGroupSearch] = useState('');
+  const [courseSearch, setCourseSearch] = useState('');
+  const [allocSearch, setAllocSearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+
   const [allocations, setAllocations] = useState([]);
   const [userList, setUserList] = useState([]);
   const [statusMsg, setStatusMsg] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
 
-  const q = adminSearch.trim().toLowerCase();
-
   const filteredTeachers = useMemo(() => {
     if (!Array.isArray(teachers)) return [];
+    const q = teacherSearch.trim().toLowerCase();
     if (!q) return teachers;
     return teachers.filter((t) => {
       const name = (t.full_name || '').toLowerCase();
@@ -53,10 +76,11 @@ export default function AdminDataManagerTab({
         idStr.includes(q)
       );
     });
-  }, [teachers, q]);
+  }, [teachers, teacherSearch]);
 
   const filteredGroups = useMemo(() => {
     if (!Array.isArray(groups)) return [];
+    const q = groupSearch.trim().toLowerCase();
     if (!q) return groups;
     return groups.filter((g) => {
       const name = (g.name || '').toLowerCase();
@@ -65,10 +89,11 @@ export default function AdminDataManagerTab({
       const idStr = String(g.id || '');
       return name.includes(q) || hkd.includes(q) || notes.includes(q) || idStr.includes(q);
     });
-  }, [groups, q]);
+  }, [groups, groupSearch]);
 
   const filteredCourses = useMemo(() => {
     if (!Array.isArray(courses)) return [];
+    const q = courseSearch.trim().toLowerCase();
     if (!q) return courses;
     return courses.filter((c) => {
       const name = (c.course_name || '').toLowerCase();
@@ -84,10 +109,11 @@ export default function AdminDataManagerTab({
         idStr.includes(q)
       );
     });
-  }, [courses, q]);
+  }, [courses, courseSearch]);
 
   const filteredAllocations = useMemo(() => {
     if (!Array.isArray(allocations)) return [];
+    const q = allocSearch.trim().toLowerCase();
     if (!q) return allocations;
     return allocations.filter((a) => {
       const tName = (a.teacher_name || '').toLowerCase();
@@ -103,10 +129,11 @@ export default function AdminDataManagerTab({
         idStr.includes(q)
       );
     });
-  }, [allocations, q]);
+  }, [allocations, allocSearch]);
 
   const filteredUsers = useMemo(() => {
     if (!Array.isArray(userList)) return [];
+    const q = userSearch.trim().toLowerCase();
     if (!q) return userList;
     return userList.filter((u) => {
       const uName = (u.username || '').toLowerCase();
@@ -115,7 +142,7 @@ export default function AdminDataManagerTab({
       const idStr = String(u.id || '');
       return uName.includes(q) || fName.includes(q) || role.includes(q) || idStr.includes(q);
     });
-  }, [userList, q]);
+  }, [userList, userSearch]);
 
   // State form Nhóm GV
   const [groupForm, setGroupForm] = useState({
@@ -551,64 +578,28 @@ export default function AdminDataManagerTab({
         </div>
       )}
 
-      {/* Chọn bảng dữ liệu cần sửa & Ô Tìm Kiếm Nhanh Admin */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          {[
-            { id: 'all', label: 'Tất Cả Phân Hệ' },
-            { id: 'teachers', label: `2. Giáo Viên & Xe (${adminSearch ? `${filteredTeachers.length}/` : ''}${teachers.length})` },
-            { id: 'groups', label: `3. Nhóm Giáo Viên (${adminSearch ? `${filteredGroups.length}/` : ''}${groups.length})` },
-            { id: 'courses', label: `1. Khóa Khai Giảng (${adminSearch ? `${filteredCourses.length}/` : ''}${courses.length})` },
-            { id: 'allocations', label: `4. Sửa Bản Ghi Lên Khóa (${adminSearch ? `${filteredAllocations.length}/` : ''}${allocations.length})` },
-            { id: 'users', label: `👤 Quản Lý Tài Khoản (${adminSearch ? `${filteredUsers.length}/` : ''}${userList.length})` },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setSubTab(item.id)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                subTab === item.id
-                  ? 'bg-blue-700 text-white shadow-sm'
-                  : 'bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Ô Tìm Kiếm Dữ Liệu Admin */}
-        <div className="relative w-full lg:w-80 shrink-0">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={adminSearch}
-            onChange={(e) => setAdminSearch(e.target.value)}
-            placeholder={
-              subTab === 'teachers'
-                ? 'Tìm tên GV, biển số, nhóm, SĐT...'
-                : subTab === 'groups'
-                ? 'Tìm tên nhóm, mã HKD...'
-                : subTab === 'courses'
-                ? 'Tìm tên khóa, ngày mở...'
-                : subTab === 'allocations'
-                ? 'Tìm giáo viên, xe, khóa lên...'
-                : subTab === 'users'
-                ? 'Tìm tài khoản, người dùng...'
-                : 'Tìm kiếm mọi danh mục admin...'
-            }
-            className="w-full pl-9 pr-9 py-2 bg-slate-50 hover:bg-white focus:bg-white border border-slate-300 rounded-xl text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition"
-          />
-          {adminSearch && (
-            <button
-              type="button"
-              onClick={() => setAdminSearch('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200 cursor-pointer"
-              title="Xóa tìm kiếm"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+      {/* Điều Hướng Phân Hệ Quản Trị */}
+      <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap items-center gap-2">
+        {[
+          { id: 'all', label: 'Tất Cả Phân Hệ' },
+          { id: 'courses', label: `1. Khóa / Ngày Khai Giảng (${courses.length})` },
+          { id: 'teachers', label: `2. Giáo Viên & Xe (${teachers.length})` },
+          { id: 'groups', label: `3. Nhóm Giáo Viên (${groups.length})` },
+          { id: 'allocations', label: `4. Sửa Bản Ghi Lên Khóa (${allocations.length})` },
+          { id: 'users', label: `👤 Quản Lý Tài Khoản (${userList.length})` },
+        ].map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setSubTab(item.id)}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+              subTab === item.id
+                ? 'bg-blue-700 text-white shadow-sm'
+                : 'bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 hover:text-blue-900'
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
 
       {/* PHÂN HỆ QUẢN LÝ TÀI KHOẢN NGƯỜI DÙNG & PHÂN QUYỀN (CHỈ ADMIN) */}
@@ -717,33 +708,70 @@ export default function AdminDataManagerTab({
             </form>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
-            <table className="w-full text-xs text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
-                  <th className="p-3">ID</th>
-                  <th className="p-3">Tên Đăng Nhập</th>
-                  <th className="p-3">Họ Tên</th>
-                  <th className="p-3">Quyền Hạn</th>
-                  <th className="p-3">Trạng Thái Truy Cập Admin</th>
-                  <th className="p-3 text-right">Sửa / Xóa</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-400 font-medium">
-                      {adminSearch
-                        ? `Không tìm thấy tài khoản nào phù hợp với từ khóa "${adminSearch}"`
-                        : 'Chưa có tài khoản người dùng nào'}
-                    </td>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            {/* Header Bảng & Ô Tìm Kiếm Tài Khoản */}
+            <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-800 text-sm">
+                  Danh Sách Tài Khoản Hệ Thống
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">
+                  {filteredUsers.length} / {userList.length} tài khoản
+                </span>
+              </div>
+
+              <div className="relative w-full sm:w-80">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  placeholder="Tìm theo Username, Họ tên..."
+                  className="w-full pl-9 pr-8 py-2 bg-white border border-slate-300 rounded-lg text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none shadow-2xs transition"
+                />
+                {userSearch && (
+                  <button
+                    onClick={() => setUserSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    title="Xóa tìm kiếm"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
+                    <th className="p-3">ID</th>
+                    <th className="p-3">Tên Đăng Nhập</th>
+                    <th className="p-3">Họ Tên</th>
+                    <th className="p-3">Quyền Hạn</th>
+                    <th className="p-3">Trạng Thái Truy Cập Admin</th>
+                    <th className="p-3 text-right">Sửa / Xóa</th>
                   </tr>
-                ) : (
-                  filteredUsers.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50">
-                    <td className="p-3 font-bold">#{u.id}</td>
-                    <td className="p-3 font-bold text-slate-900 font-mono">{u.username}</td>
-                    <td className="p-3 font-bold text-blue-900">{u.full_name}</td>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-slate-400 font-medium">
+                        {userSearch
+                          ? `Không tìm thấy tài khoản nào khớp với "${userSearch}"`
+                          : 'Chưa có tài khoản người dùng nào'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map((u) => (
+                      <tr key={u.id} className="hover:bg-slate-50">
+                        <td className="p-3 font-bold">#{u.id}</td>
+                        <td className="p-3 font-bold text-slate-900 font-mono">
+                          {highlightMatch(u.username, userSearch)}
+                        </td>
+                        <td className="p-3 font-bold text-blue-900">
+                          {highlightMatch(u.full_name, userSearch)}
+                        </td>
                     <td className="p-3">
                       {u.role === 'admin' ? (
                         <span className="px-2.5 py-1 bg-amber-100 border border-amber-300 text-amber-900 font-black rounded-full text-[11px]">
@@ -790,7 +818,8 @@ export default function AdminDataManagerTab({
             </table>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* BẢNG 1: SỬA GIÁO VIÊN & XE */}
       {(subTab === 'all' || subTab === 'teachers') && (
@@ -928,42 +957,83 @@ export default function AdminDataManagerTab({
             </form>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
-            <table className="w-full text-xs text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
-                  <th className="p-3">ID</th>
-                  <th className="p-3">Họ Tên Giáo Viên</th>
-                  <th className="p-3">SĐT</th>
-                  <th className="p-3">Nhóm Giáo Viên</th>
-                  <th className="p-3">Biển Số Xe</th>
-                  <th className="p-3">Hạng</th>
-                  <th className="p-3">Định Mức</th>
-                  <th className="p-3">Hộ Kinh Doanh</th>
-                  <th className="p-3 text-right">Sửa / Xóa</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {filteredTeachers.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="p-8 text-center text-slate-400 font-medium">
-                      {adminSearch
-                        ? `Không tìm thấy giáo viên hay xe nào phù hợp với từ khóa "${adminSearch}"`
-                        : 'Chưa có dữ liệu giáo viên & xe nào'}
-                    </td>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            {/* Thanh Tìm Kiếm Trực Tiếp Cho Bảng Giáo Viên & Xe */}
+            <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-800 text-sm">
+                  Danh Sách Giáo Viên & Xe Đào Tạo
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">
+                  {filteredTeachers.length} / {teachers.length} xe / GV
+                </span>
+              </div>
+
+              <div className="relative w-full sm:w-80">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={teacherSearch}
+                  onChange={(e) => setTeacherSearch(e.target.value)}
+                  placeholder="Tìm theo Tên GV, Biển số xe, SĐT, Nhóm..."
+                  className="w-full pl-9 pr-8 py-2 bg-white border border-slate-300 rounded-lg text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none shadow-2xs transition"
+                />
+                {teacherSearch && (
+                  <button
+                    onClick={() => setTeacherSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    title="Xóa tìm kiếm"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
+                    <th className="p-3">ID</th>
+                    <th className="p-3">Họ Tên Giáo Viên</th>
+                    <th className="p-3">SĐT</th>
+                    <th className="p-3">Nhóm Giáo Viên</th>
+                    <th className="p-3">Biển Số Xe</th>
+                    <th className="p-3">Hạng</th>
+                    <th className="p-3">Định Mức</th>
+                    <th className="p-3">Hộ Kinh Doanh</th>
+                    <th className="p-3 text-right">Sửa / Xóa</th>
                   </tr>
-                ) : (
-                  filteredTeachers.map((t) => (
-                    <tr key={t.id} className="hover:bg-slate-50">
-                    <td className="p-3 font-bold">#{t.id}</td>
-                    <td className="p-3 font-bold text-slate-900 whitespace-nowrap">{t.full_name}</td>
-                    <td className="p-3 text-slate-600 whitespace-nowrap">{t.phone || '-'}</td>
-                    <td className="p-3">{t.group_name}</td>
-                    <td className="p-3 whitespace-nowrap">
-                      <span className="inline-block whitespace-nowrap px-2.5 py-0.5 bg-amber-300 font-bold rounded border border-slate-800">
-                        {t.vehicle?.license_plate || '-'}
-                      </span>
-                    </td>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {filteredTeachers.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="p-8 text-center text-slate-400 font-medium">
+                        {teacherSearch
+                          ? `Không tìm thấy giáo viên hay xe nào khớp với "${teacherSearch}"`
+                          : 'Chưa có dữ liệu giáo viên & xe nào'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredTeachers.map((t) => (
+                      <tr key={t.id} className="hover:bg-slate-50">
+                        <td className="p-3 font-bold">#{t.id}</td>
+                        <td className="p-3 font-bold text-slate-900 whitespace-nowrap">
+                          {highlightMatch(t.full_name, teacherSearch)}
+                        </td>
+                        <td className="p-3 text-slate-600 whitespace-nowrap">
+                          {t.phone ? highlightMatch(t.phone, teacherSearch) : '-'}
+                        </td>
+                        <td className="p-3">
+                          {highlightMatch(t.group_name, teacherSearch)}
+                        </td>
+                        <td className="p-3 whitespace-nowrap">
+                          <span className="inline-block whitespace-nowrap px-2.5 py-0.5 bg-amber-300 font-bold rounded border border-slate-800">
+                            {t.vehicle?.license_plate
+                              ? highlightMatch(t.vehicle.license_plate, teacherSearch)
+                              : '-'}
+                          </span>
+                        </td>
                     <td className="p-3 font-semibold">{t.vehicle?.vehicle_class || 'B2'}</td>
                     <td className="p-3 font-bold">{t.vehicle?.max_quota || 5} HV</td>
                     <td className="p-3">
@@ -1008,7 +1078,8 @@ export default function AdminDataManagerTab({
             </table>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* BẢNG 2: SỬA NHÓM GIÁO VIÊN */}
       {(subTab === 'all' || subTab === 'groups') && (
@@ -1087,45 +1158,82 @@ export default function AdminDataManagerTab({
             </form>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
-            <table className="w-full text-xs text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
-                  <th className="p-3">ID</th>
-                  <th className="p-3">Tên Nhóm Giáo Viên</th>
-                  <th className="p-3">Hộ Kinh Doanh</th>
-                  <th className="p-3">Mã HKD</th>
-                  <th className="p-3">Số Giáo Viên</th>
-                  <th className="p-3">Số Khóa Bỏ Qua Liên Tiếp</th>
-                  <th className="p-3 text-right">Sửa / Xóa</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {filteredGroups.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-400 font-medium">
-                      {adminSearch
-                        ? `Không tìm thấy nhóm giáo viên nào phù hợp với từ khóa "${adminSearch}"`
-                        : 'Chưa có nhóm giáo viên nào'}
-                    </td>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            {/* Thanh Tìm Kiếm Trực Tiếp Cho Bảng Nhóm GV */}
+            <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-800 text-sm">
+                  Danh Sách Nhóm Giáo Viên & Hộ Kinh Doanh
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">
+                  {filteredGroups.length} / {groups.length} nhóm
+                </span>
+              </div>
+
+              <div className="relative w-full sm:w-80">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={groupSearch}
+                  onChange={(e) => setGroupSearch(e.target.value)}
+                  placeholder="Tìm theo Tên Nhóm GV, Mã HKD..."
+                  className="w-full pl-9 pr-8 py-2 bg-white border border-slate-300 rounded-lg text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none shadow-2xs transition"
+                />
+                {groupSearch && (
+                  <button
+                    onClick={() => setGroupSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    title="Xóa tìm kiếm"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
+                    <th className="p-3">ID</th>
+                    <th className="p-3">Tên Nhóm Giáo Viên</th>
+                    <th className="p-3">Hộ Kinh Doanh</th>
+                    <th className="p-3">Mã HKD</th>
+                    <th className="p-3">Số Giáo Viên</th>
+                    <th className="p-3">Số Khóa Bỏ Qua Liên Tiếp</th>
+                    <th className="p-3 text-right">Sửa / Xóa</th>
                   </tr>
-                ) : (
-                  filteredGroups.map((g) => (
-                    <tr key={g.id} className="hover:bg-slate-50">
-                    <td className="p-3 font-bold">#{g.id}</td>
-                    <td className="p-3 font-bold text-slate-900">{g.name}</td>
-                    <td className="p-3">
-                      {g.has_business_household ? (
-                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">
-                          Đã có HKD
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 bg-amber-100 text-amber-900 rounded font-bold">
-                          Chưa có HKD
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-3">{g.business_household_info || '-'}</td>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {filteredGroups.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-slate-400 font-medium">
+                        {groupSearch
+                          ? `Không tìm thấy nhóm giáo viên nào khớp với "${groupSearch}"`
+                          : 'Chưa có nhóm giáo viên nào'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredGroups.map((g) => (
+                      <tr key={g.id} className="hover:bg-slate-50">
+                        <td className="p-3 font-bold">#{g.id}</td>
+                        <td className="p-3 font-bold text-slate-900">
+                          {highlightMatch(g.name, groupSearch)}
+                        </td>
+                        <td className="p-3">
+                          {g.has_business_household ? (
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">
+                              Đã có HKD
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-900 rounded font-bold">
+                              Chưa có HKD
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-3">
+                          {g.business_household_info ? highlightMatch(g.business_household_info, groupSearch) : '-'}
+                        </td>
                     <td className="p-3 font-semibold">{g.teacher_count} GV</td>
                     <td className="p-3 font-bold text-red-600">{g.consecutive_missed_courses} khóa</td>
                     <td className="p-3 text-right space-x-1.5">
@@ -1156,7 +1264,8 @@ export default function AdminDataManagerTab({
             </table>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* BẢNG 3: SỬA KHÓA KHAI GIẢNG */}
       {(subTab === 'all' || subTab === 'courses') && (
@@ -1271,34 +1380,71 @@ export default function AdminDataManagerTab({
             </form>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
-            <table className="w-full text-xs text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
-                  <th className="p-3">ID</th>
-                  <th className="p-3">Tên Khóa Khai Giảng</th>
-                  <th className="p-3">Ngày Khai Giảng</th>
-                  <th className="p-3">Ngày Bế Giảng</th>
-                  <th className="p-3">Tổng Học Viên</th>
-                  <th className="p-3">Ghi Chú</th>
-                  <th className="p-3 text-right">Sửa / Xóa</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {filteredCourses.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-400 font-medium">
-                      {adminSearch
-                        ? `Không tìm thấy khóa khai giảng nào phù hợp với từ khóa "${adminSearch}"`
-                        : 'Chưa có khóa khai giảng nào'}
-                    </td>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            {/* Thanh Tìm Kiếm Trực Tiếp Cho Bảng Khóa Khai Giảng */}
+            <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-800 text-sm">
+                  Danh Sách Khóa (Ngày) Khai Giảng
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">
+                  {filteredCourses.length} / {courses.length} khóa
+                </span>
+              </div>
+
+              <div className="relative w-full sm:w-80">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={courseSearch}
+                  onChange={(e) => setCourseSearch(e.target.value)}
+                  placeholder="Tìm theo Tên Khóa (BK...), Ngày mở..."
+                  className="w-full pl-9 pr-8 py-2 bg-white border border-slate-300 rounded-lg text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none shadow-2xs transition"
+                />
+                {courseSearch && (
+                  <button
+                    onClick={() => setCourseSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    title="Xóa tìm kiếm"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
+                    <th className="p-3">ID</th>
+                    <th className="p-3">Tên Khóa Khai Giảng</th>
+                    <th className="p-3">Ngày Khai Giảng</th>
+                    <th className="p-3">Ngày Bế Giảng</th>
+                    <th className="p-3">Tổng Học Viên</th>
+                    <th className="p-3">Ghi Chú</th>
+                    <th className="p-3 text-right">Sửa / Xóa</th>
                   </tr>
-                ) : (
-                  filteredCourses.map((c) => (
-                    <tr key={c.id} className="hover:bg-slate-50">
-                    <td className="p-3 font-bold">#{c.id}</td>
-                    <td className="p-3 font-bold text-slate-900">{c.course_name}</td>
-                    <td className="p-3 font-bold text-blue-700 whitespace-nowrap">{formatDateVN(c.opening_date)}</td>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {filteredCourses.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-slate-400 font-medium">
+                        {courseSearch
+                          ? `Không tìm thấy khóa khai giảng nào khớp với "${courseSearch}"`
+                          : 'Chưa có khóa khai giảng nào'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredCourses.map((c) => (
+                      <tr key={c.id} className="hover:bg-slate-50">
+                        <td className="p-3 font-bold">#{c.id}</td>
+                        <td className="p-3 font-bold text-slate-900">
+                          {highlightMatch(c.course_name, courseSearch)}
+                        </td>
+                        <td className="p-3 font-bold text-blue-700 whitespace-nowrap">
+                          {highlightMatch(formatDateVN(c.opening_date), courseSearch)}
+                        </td>
                     <td className="p-3 font-bold text-purple-800 whitespace-nowrap">
                       {c.closing_date ? formatDateVN(c.closing_date) : '-'}
                     </td>
@@ -1332,7 +1478,8 @@ export default function AdminDataManagerTab({
             </table>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* BẢNG 4: SỬA BẢN GHI LÊN KHÓA */}
       {(subTab === 'all' || subTab === 'allocations') && (
@@ -1436,49 +1583,86 @@ export default function AdminDataManagerTab({
             </form>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
-            <table className="w-full text-xs text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
-                  <th className="p-3">ID</th>
-                  <th className="p-3">Ngày Khai Giảng</th>
-                  <th className="p-3">Ngày Bế Giảng</th>
-                  <th className="p-3">Khóa</th>
-                  <th className="p-3">Giáo Viên & Nhóm</th>
-                  <th className="p-3">Biển Số Xe</th>
-                  <th className="p-3">Số HV</th>
-                  <th className="p-3">Đủ 3 Tuần</th>
-                  <th className="p-3">Quay Đầu 6 Tuần</th>
-                  <th className="p-3 text-right">Sửa / Xóa</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {filteredAllocations.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} className="p-8 text-center text-slate-400 font-medium">
-                      {adminSearch
-                        ? `Không tìm thấy bản ghi lên khóa nào phù hợp với từ khóa "${adminSearch}"`
-                        : 'Chưa có bản ghi lên khóa nào'}
-                    </td>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            {/* Thanh Tìm Kiếm Trực Tiếp Cho Bảng Lên Khóa */}
+            <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-800 text-sm">
+                  Danh Sách Bản Ghi Lên Khóa
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">
+                  {filteredAllocations.length} / {allocations.length} lượt lên
+                </span>
+              </div>
+
+              <div className="relative w-full sm:w-80">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={allocSearch}
+                  onChange={(e) => setAllocSearch(e.target.value)}
+                  placeholder="Tìm theo Tên GV, Biển số xe, Khóa..."
+                  className="w-full pl-9 pr-8 py-2 bg-white border border-slate-300 rounded-lg text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none shadow-2xs transition"
+                />
+                {allocSearch && (
+                  <button
+                    onClick={() => setAllocSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    title="Xóa tìm kiếm"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
+                    <th className="p-3">ID</th>
+                    <th className="p-3">Ngày Khai Giảng</th>
+                    <th className="p-3">Ngày Bế Giảng</th>
+                    <th className="p-3">Khóa</th>
+                    <th className="p-3">Giáo Viên & Nhóm</th>
+                    <th className="p-3">Biển Số Xe</th>
+                    <th className="p-3">Số HV</th>
+                    <th className="p-3">Đủ 3 Tuần</th>
+                    <th className="p-3">Quay Đầu 6 Tuần</th>
+                    <th className="p-3 text-right">Sửa / Xóa</th>
                   </tr>
-                ) : (
-                  filteredAllocations.map((a) => (
-                    <tr key={a.id} className="hover:bg-slate-50">
-                    <td className="p-3 font-bold">#{a.id}</td>
-                    <td className="p-3 font-bold text-blue-700 whitespace-nowrap">{formatDateVN(a.opening_date)}</td>
-                    <td className="p-3 font-bold text-purple-800 whitespace-nowrap">
-                      {a.closing_date ? formatDateVN(a.closing_date) : '-'}
-                    </td>
-                    <td className="p-3 font-semibold">{a.course_name}</td>
-                    <td className="p-3 font-bold text-slate-900 whitespace-nowrap">
-                      {a.teacher_name}
-                      <div className="text-[11px] font-normal text-slate-500">{a.group_name}</div>
-                    </td>
-                    <td className="p-3 font-bold whitespace-nowrap">
-                      <span className="inline-block whitespace-nowrap px-2.5 py-0.5 bg-amber-300 font-bold rounded border border-slate-800">
-                        {a.license_plate}
-                      </span>
-                    </td>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {filteredAllocations.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} className="p-8 text-center text-slate-400 font-medium">
+                        {allocSearch
+                          ? `Không tìm thấy bản ghi lên khóa nào khớp với "${allocSearch}"`
+                          : 'Chưa có bản ghi lên khóa nào'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredAllocations.map((a) => (
+                      <tr key={a.id} className="hover:bg-slate-50">
+                        <td className="p-3 font-bold">#{a.id}</td>
+                        <td className="p-3 font-bold text-blue-700 whitespace-nowrap">{formatDateVN(a.opening_date)}</td>
+                        <td className="p-3 font-bold text-purple-800 whitespace-nowrap">
+                          {a.closing_date ? formatDateVN(a.closing_date) : '-'}
+                        </td>
+                        <td className="p-3 font-semibold">
+                          {highlightMatch(a.course_name, allocSearch)}
+                        </td>
+                        <td className="p-3 font-bold text-slate-900 whitespace-nowrap">
+                          {highlightMatch(a.teacher_name, allocSearch)}
+                          <div className="text-[11px] font-normal text-slate-500">
+                            {highlightMatch(a.group_name, allocSearch)}
+                          </div>
+                        </td>
+                        <td className="p-3 font-bold whitespace-nowrap">
+                          <span className="inline-block whitespace-nowrap px-2.5 py-0.5 bg-amber-300 font-bold rounded border border-slate-800">
+                            {highlightMatch(a.license_plate, allocSearch)}
+                          </span>
+                        </td>
                     <td className="p-3 font-bold text-emerald-700 whitespace-nowrap">{a.student_count} HV</td>
                     <td className="p-3 whitespace-nowrap">
                       {a.student_count < 5 ? (
@@ -1521,8 +1705,9 @@ export default function AdminDataManagerTab({
             </table>
           </div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    )}
+  </div>
+);
 }
 
