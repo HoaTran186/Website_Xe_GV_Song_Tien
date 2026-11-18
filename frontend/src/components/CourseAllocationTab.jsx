@@ -8,6 +8,8 @@ import {
   ArrowLeftRight,
   Check,
   Filter,
+  Users,
+  GraduationCap,
 } from 'lucide-react';
 import { api } from '../api/client';
 import {
@@ -345,6 +347,101 @@ export default function CourseAllocationTab({
         </div>
       )}
 
+      {/* THÔNG TIN TỔNG QUAN & TỔNG SỐ HỌC VIÊN CỦA KHÓA ĐANG CHỌN */}
+      {activeCourse && (
+        <div className="bg-white rounded-xl shadow-sm border border-blue-200 p-5 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-white">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 px-2.5 py-0.5 rounded-full">
+                  Khóa đang chọn
+                </span>
+                <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                  {activeCourse.course_name}
+                </h2>
+                {detectedCourseClass && (
+                  <span className="px-3 py-0.5 bg-amber-400 text-slate-950 font-black text-xs rounded-full border border-slate-900 shadow-2xs">
+                    Hạng {detectedCourseClass} ({getCoursePatternLabel(detectedCourseClass)})
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-slate-600 mt-1.5">
+                <span>
+                  📅 Khai giảng: <strong className="text-blue-900 font-bold">{formatDateVN(activeCourse.opening_date)}</strong>
+                </span>
+                <span>
+                  🏁 Bế giảng:{' '}
+                  <strong className="text-purple-900 font-bold">
+                    {activeCourse.closing_date ? formatDateVN(activeCourse.closing_date) : 'Chưa cập nhật'}
+                  </strong>
+                </span>
+                {activeCourse.notes && (
+                  <span className="text-slate-500 italic">
+                    Ghi chú: {activeCourse.notes}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Khối Thống kê Tổng Số Học Viên Khóa */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="bg-white border-2 border-blue-600 rounded-xl px-5 py-2.5 text-center shadow-sm min-w-[155px]">
+                <div className="text-[11px] font-bold uppercase text-slate-500 tracking-wider">
+                  Tổng Số Học Viên Của Khóa
+                </div>
+                <div className="text-2xl font-black text-blue-700 leading-tight">
+                  {activeCourse.total_students || 0}{' '}
+                  <span className="text-xs font-bold text-slate-600">học viên</span>
+                </div>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-center shadow-sm min-w-[120px]">
+                <div className="text-[11px] font-bold uppercase text-slate-500 tracking-wider">
+                  Đã Lên Khóa
+                </div>
+                <div className="text-lg font-bold text-slate-800 leading-tight">
+                  {activeCourse.allocations?.length || 0}{' '}
+                  <span className="text-xs font-normal text-slate-500">lượt xe / GV</span>
+                </div>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-center shadow-sm min-w-[100px]">
+                <div className="text-[11px] font-bold uppercase text-slate-500 tracking-wider">
+                  Số Nhóm
+                </div>
+                <div className="text-lg font-bold text-slate-800 leading-tight">
+                  {activeCourse.participating_groups_count || 0}{' '}
+                  <span className="text-xs font-normal text-slate-500">nhóm</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Chi tiết học viên phân bổ theo từng nhóm giáo viên */}
+          {activeCourse.allocations && activeCourse.allocations.length > 0 && (
+            <div className="mt-4 pt-3.5 border-t border-blue-200/60 flex flex-wrap items-center gap-2 text-xs">
+              <span className="font-bold text-slate-700 flex items-center gap-1">
+                <Users className="w-3.5 h-3.5 text-blue-600" /> Chi tiết học viên theo nhóm:
+              </span>
+              {Object.entries(
+                activeCourse.allocations.reduce((acc, a) => {
+                  acc[a.group_name] = (acc[a.group_name] || 0) + Number(a.student_count);
+                  return acc;
+                }, {})
+              ).map(([grpName, stCount]) => (
+                <span
+                  key={grpName}
+                  className="px-2.5 py-1 bg-white border border-blue-200 rounded-lg text-slate-800 font-semibold shadow-2xs flex items-center gap-1.5"
+                >
+                  <span>{grpName}:</span>
+                  <span className="text-blue-700 font-extrabold">{stCount} HV</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Khu vực 1: Chọn Khóa Khai Giảng & Tạo Ngày Khai Giảng Mới */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
@@ -412,7 +509,7 @@ export default function CourseAllocationTab({
                     return (
                       <option key={c.id} value={c.id}>
                         {formatDateVN(c.opening_date)} — {c.course_name}{' '}
-                        {cClass ? `[Hạng ${cClass}]` : ''}
+                        {cClass ? `[Hạng ${cClass}]` : ''} — ({c.total_students || 0} học viên)
                       </option>
                     );
                   })}
@@ -1035,10 +1132,31 @@ export default function CourseAllocationTab({
       {/* Khu vực 3: Danh sách các bản ghi đã lên khóa của Khóa đang chọn */}
       {activeCourse && (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h3 className="text-base font-bold text-slate-900 mb-3">
-            Danh Sách Đã Lên Khóa Trong {activeCourse.course_name}{' '}
-            {detectedCourseClass ? `[Hạng ${detectedCourseClass}]` : ''} ({formatDateVN(activeCourse.opening_date)})
-          </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                Danh Sách Đã Lên Khóa Trong {activeCourse.course_name}{' '}
+                {detectedCourseClass ? `[Hạng ${detectedCourseClass}]` : ''} ({formatDateVN(activeCourse.opening_date)})
+              </h3>
+              {activeCourse.closing_date && (
+                <p className="text-xs text-purple-700 font-semibold mt-0.5">
+                  Ngày bế giảng: {formatDateVN(activeCourse.closing_date)}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="px-3.5 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-xs font-bold text-blue-950 flex items-center gap-1.5 shadow-2xs">
+                <span>Tổng số học viên của khóa:</span>
+                <span className="text-sm font-black text-blue-700">{activeCourse.total_students || 0}</span>
+                <span>HV</span>
+              </div>
+              <div className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700">
+                {activeCourse.allocations?.length || 0} lượt xe / GV
+              </div>
+            </div>
+          </div>
+
           {!activeCourse.allocations || activeCourse.allocations.length === 0 ? (
             <p className="text-xs text-slate-500 italic">
               Chưa có giáo viên nào đăng ký học viên trong ngày khai giảng này.
@@ -1115,6 +1233,19 @@ export default function CourseAllocationTab({
                     </tr>
                   ))}
                 </tbody>
+                <tfoot>
+                  <tr className="bg-slate-100 border-t-2 border-slate-300 text-slate-900 font-bold">
+                    <td colSpan={3} className="py-3 px-3 text-right uppercase text-xs tracking-wider">
+                      TỔNG CỘNG HỌC VIÊN CỦA KHÓA {activeCourse.course_name}:
+                    </td>
+                    <td className="py-3 px-3 text-blue-900 font-black text-sm whitespace-nowrap">
+                      {activeCourse.total_students || 0} HV
+                    </td>
+                    <td colSpan={6} className="py-3 px-3 text-slate-600 font-semibold text-xs">
+                      (Đã lên cho {activeCourse.allocations?.length || 0} lượt xe & giáo viên)
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           )}
