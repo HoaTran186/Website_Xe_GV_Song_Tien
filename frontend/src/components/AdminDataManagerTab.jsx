@@ -493,17 +493,17 @@ export default function AdminDataManagerTab({
   };
 
   const renderTableExcelActions = (tableKey, tableLabel) => (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
       <button
         type="button"
         onClick={() => downloadTableSampleExcel(tableKey)}
-        className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-400 rounded-lg text-xs font-bold flex items-center gap-1"
+        className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-400 rounded-lg text-xs font-bold flex items-center justify-center gap-1 cursor-pointer"
       >
-        <Download className="w-3.5 h-3.5 text-emerald-700" />
+        <Download className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
         Tải Mẫu Excel ({tableLabel})
       </button>
-      <label className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer">
-        <Upload className="w-3.5 h-3.5" />
+      <label className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 cursor-pointer">
+        <Upload className="w-3.5 h-3.5 shrink-0" />
         <span>Nhập File Excel Cho {tableLabel}</span>
         <input
           type="file"
@@ -518,30 +518,30 @@ export default function AdminDataManagerTab({
   return (
     <div className="space-y-6">
       {/* Header Admin */}
-      <div className="bg-slate-900 text-white rounded-xl p-6 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-start gap-3.5">
+      <div className="bg-slate-900 text-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start gap-3 sm:gap-3.5">
           <div className="bg-white p-1 rounded-xl shadow shrink-0 flex items-center justify-center">
             <img
               src="/logo-song-tien.jpg"
               alt="Logo Sông Tiền"
-              className="w-11 h-11 object-contain rounded-lg"
+              className="w-10 h-10 sm:w-11 sm:h-11 object-contain rounded-lg"
             />
           </div>
           <div>
-            <h2 className="text-lg font-bold">
+            <h2 className="text-base sm:text-lg font-bold leading-tight">
               TRUNG TÂM QUẢN TRỊ DỮ LIỆU ADMIN (THÊM • SỬA • XÓA TOÀN BỘ CSDL)
             </h2>
-            <p className="text-xs text-slate-300 mt-0.5">
+            <p className="text-xs text-slate-300 mt-1">
               Cho phép Admin sửa đổi trực tiếp mọi bảng dữ liệu: Nhóm giáo viên, Giáo viên & Biển số xe, Ngày khai giảng và Lịch sử lên khóa.
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
           {onBackToUser && (
             <button
               onClick={onBackToUser}
-              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow transition"
+              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 shadow transition cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               ← Về Trang Chính (Lên Khóa)
@@ -549,17 +549,17 @@ export default function AdminDataManagerTab({
           )}
           <button
             onClick={handleExportJSON}
-            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5"
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Download className="w-4 h-4" />
             Xuất JSON Backup
           </button>
           <button
             onClick={handleResetSeed}
-            className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5"
+            className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
-            Xóa Trắng Toàn Bộ Dữ Liệu
+            Xóa Trắng Dữ Liệu
           </button>
         </div>
       </div>
@@ -579,10 +579,10 @@ export default function AdminDataManagerTab({
       )}
 
       {/* Điều Hướng Phân Hệ Quản Trị */}
-      <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap items-center gap-2">
+      <div className="bg-white p-2.5 sm:p-3 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200/80 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar sm:flex-wrap">
         {[
           { id: 'all', label: 'Tất Cả Phân Hệ' },
-          { id: 'courses', label: `1. Khóa / Ngày Khai Giảng (${courses.length})` },
+          { id: 'courses', label: `1. Khóa Khai Giảng (${courses.length})` },
           { id: 'teachers', label: `2. Giáo Viên & Xe (${teachers.length})` },
           { id: 'groups', label: `3. Nhóm Giáo Viên (${groups.length})` },
           { id: 'allocations', label: `4. Sửa Bản Ghi Lên Khóa (${allocations.length})` },
@@ -591,7 +591,7 @@ export default function AdminDataManagerTab({
           <button
             key={item.id}
             onClick={() => setSubTab(item.id)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold shrink-0 whitespace-nowrap transition cursor-pointer ${
               subTab === item.id
                 ? 'bg-blue-700 text-white shadow-sm'
                 : 'bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 hover:text-blue-900'
@@ -841,7 +841,7 @@ export default function AdminDataManagerTab({
               </h3>
               {renderTableExcelActions('teachers', 'Bảng Giáo Viên & Xe')}
             </div>
-            <form onSubmit={handleSaveTeacher} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+            <form onSubmit={handleSaveTeacher} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Nhóm Giáo Viên *</label>
                 <select
@@ -1093,8 +1093,8 @@ export default function AdminDataManagerTab({
               </h3>
               {renderTableExcelActions('groups', 'Bảng Nhóm GV')}
             </div>
-            <form onSubmit={handleSaveGroup} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
-              <div className="md:col-span-2">
+            <form onSubmit={handleSaveGroup} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Tên Nhóm Giáo Viên *</label>
                 <input
                   type="text"
@@ -1279,7 +1279,7 @@ export default function AdminDataManagerTab({
               </h3>
               {renderTableExcelActions('courses', 'Bảng Khóa Khai Giảng')}
             </div>
-            <form onSubmit={handleSaveCourse} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+            <form onSubmit={handleSaveCourse} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Tên Khóa Khai Giảng *</label>
                 <input
@@ -1493,7 +1493,7 @@ export default function AdminDataManagerTab({
               </h3>
               {renderTableExcelActions('allocations', 'Bảng Lên Khóa')}
             </div>
-            <form onSubmit={handleSaveAllocation} className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
+            <form onSubmit={handleSaveAllocation} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 items-end">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Khóa Khai Giảng *</label>
                 <select

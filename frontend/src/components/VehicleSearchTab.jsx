@@ -91,18 +91,18 @@ export default function VehicleSearchTab() {
                 key={item.vehicle_id}
                 className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
               >
-                <div className="bg-slate-100/80 px-6 py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="inline-block whitespace-nowrap px-4 py-2 bg-amber-400 text-slate-950 font-black text-lg rounded-lg border-2 border-slate-900 tracking-wider shadow-sm">
+                <div className="bg-slate-100/80 px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4">
+                    <div className="inline-block whitespace-nowrap px-3.5 sm:px-4 py-1.5 sm:py-2 bg-amber-400 text-slate-950 font-black text-base sm:text-lg rounded-lg border-2 border-slate-900 tracking-wider shadow-sm w-fit">
                       {item.license_plate}
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-blue-700" />
-                        <span className="text-base font-bold text-slate-900">
-                          Giáo viên: {item.teacher.full_name}
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <User className="w-4 h-4 text-blue-700 shrink-0" />
+                        <span className="text-sm sm:text-base font-bold text-slate-900">
+                          GV: {item.teacher.full_name}
                         </span>
-                        <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-semibold">
+                        <span className="text-[11px] sm:text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-semibold shrink-0">
                           Hạng {item.vehicle_class} ({getCoursePatternLabel(item.vehicle_class)})
                         </span>
                       </div>
@@ -115,24 +115,24 @@ export default function VehicleSearchTab() {
 
                   <div className="flex flex-wrap items-center gap-2">
                     {q.business_household_warning ? (
-                      <span className="flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-full text-xs font-bold">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-700" />
-                        Chưa đầy đủ Hộ Kinh Doanh
+                      <span className="flex items-center gap-1 px-2.5 sm:px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-full text-xs font-bold">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                        Chưa có HKD
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Đã có Hộ Kinh Doanh
+                      <span className="flex items-center gap-1 px-2.5 sm:px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                        Đã có HKD
                       </span>
                     )}
-                    <div className="px-3.5 py-1 bg-blue-900 text-white rounded-full text-xs font-bold">
-                      Đã lên: {q.used_quota}/{item.max_quota} HV • Còn lại khai giảng:{' '}
-                      <span className="text-amber-300 text-sm">{q.remaining_quota} HV</span>
+                    <div className="px-3 sm:px-3.5 py-1 bg-blue-900 text-white rounded-full text-xs font-bold">
+                      Đã lên: {q.used_quota}/{item.max_quota} HV • Còn lại:{' '}
+                      <span className="text-amber-300 font-extrabold">{q.remaining_quota} HV</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   <div className="mb-4 p-3.5 rounded-lg bg-blue-50/70 border border-blue-200 text-xs text-blue-950 flex flex-wrap items-center justify-between gap-2">
                     <span>
                       <strong>Trạng thái chu kỳ 3 tuần / 6 tuần:</strong> {q.status_message}

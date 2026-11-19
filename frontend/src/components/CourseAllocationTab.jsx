@@ -385,32 +385,32 @@ export default function CourseAllocationTab({
             </div>
 
             {/* Khối Thống kê Tổng Số Học Viên Khóa */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="bg-white border-2 border-blue-600 rounded-xl px-5 py-2.5 text-center shadow-sm min-w-[155px]">
-                <div className="text-[11px] font-bold uppercase text-slate-500 tracking-wider">
-                  Tổng Số Học Viên Của Khóa
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 w-full md:w-auto">
+              <div className="col-span-2 sm:col-span-1 bg-white border-2 border-blue-600 rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-center shadow-sm">
+                <div className="text-[10px] sm:text-[11px] font-bold uppercase text-slate-500 tracking-wider">
+                  Tổng Số HV Khóa
                 </div>
-                <div className="text-2xl font-black text-blue-700 leading-tight">
+                <div className="text-xl sm:text-2xl font-black text-blue-700 leading-tight">
                   {activeCourse.total_students || 0}{' '}
                   <span className="text-xs font-bold text-slate-600">học viên</span>
                 </div>
               </div>
 
-              <div className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-center shadow-sm min-w-[120px]">
-                <div className="text-[11px] font-bold uppercase text-slate-500 tracking-wider">
+              <div className="bg-white border border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-center shadow-sm">
+                <div className="text-[10px] sm:text-[11px] font-bold uppercase text-slate-500 tracking-wider">
                   Đã Lên Khóa
                 </div>
-                <div className="text-lg font-bold text-slate-800 leading-tight">
+                <div className="text-base sm:text-lg font-bold text-slate-800 leading-tight">
                   {activeCourse.allocations?.length || 0}{' '}
-                  <span className="text-xs font-normal text-slate-500">lượt xe / GV</span>
+                  <span className="text-xs font-normal text-slate-500">lượt xe</span>
                 </div>
               </div>
 
-              <div className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-center shadow-sm min-w-[100px]">
-                <div className="text-[11px] font-bold uppercase text-slate-500 tracking-wider">
+              <div className="bg-white border border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-center shadow-sm">
+                <div className="text-[10px] sm:text-[11px] font-bold uppercase text-slate-500 tracking-wider">
                   Số Nhóm
                 </div>
-                <div className="text-lg font-bold text-slate-800 leading-tight">
+                <div className="text-base sm:text-lg font-bold text-slate-800 leading-tight">
                   {activeCourse.participating_groups_count || 0}{' '}
                   <span className="text-xs font-normal text-slate-500">nhóm</span>
                 </div>
@@ -661,14 +661,14 @@ export default function CourseAllocationTab({
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   5. Số Lượng Học Viên Lên *
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <input
                     type="number"
                     min={1}
                     max={5}
                     value={studentCount}
                     onChange={(e) => setStudentCount(Math.min(5, Math.max(1, Number(e.target.value))))}
-                    className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-base font-black text-center text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-16 sm:w-20 px-2 sm:px-3 py-2 border border-slate-300 rounded-lg text-base font-black text-center text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shrink-0"
                   />
                   {/* Nút bấm nhanh 1, 2, 3, 4, 5 cực tiện lợi */}
                   <div className="flex gap-1 flex-1">
@@ -677,7 +677,7 @@ export default function CourseAllocationTab({
                         type="button"
                         key={num}
                         onClick={() => setStudentCount(num)}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg border transition ${
+                        className={`flex-1 py-1.5 sm:py-2 px-0.5 sm:px-1 text-[11px] sm:text-xs font-bold rounded-lg border transition cursor-pointer ${
                           Number(studentCount) === num
                             ? 'bg-blue-700 text-white border-blue-700 shadow-2xs'
                             : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -775,18 +775,18 @@ export default function CourseAllocationTab({
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     type="button"
                     onClick={() => submitAllocation(true)}
-                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg"
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg cursor-pointer"
                   >
                     Vẫn Xác Nhận Lên Khóa (Kèm Cảnh Báo HKD)
                   </button>
                   <button
                     type="button"
                     onClick={() => setPendingHKDWarning(null)}
-                    className="px-4 py-2 bg-white text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg"
+                    className="px-4 py-2 bg-white text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg cursor-pointer hover:bg-slate-50"
                   >
                     Hủy Bỏ
                   </button>
@@ -958,25 +958,23 @@ export default function CourseAllocationTab({
         </div>
 
         {/* Thanh bấm lọc nhanh theo Hạng B1 / B2 / C1 */}
-        <div className="flex flex-wrap items-center gap-2 mb-4 pb-3 border-b border-slate-200">
-          <span className="text-xs font-bold text-slate-700">Lọc theo Hạng xe / Khóa:</span>
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200 overflow-x-auto no-scrollbar sm:flex-wrap">
+          <span className="text-xs font-bold text-slate-700 shrink-0 whitespace-nowrap">Lọc theo Hạng xe / Khóa:</span>
           {[
             {
               id: 'AUTO_BY_COURSE',
-              label: `Tự động theo khóa ${activeCourse?.course_name || ''} (${
-                detectedCourseClass ? `Hạng ${detectedCourseClass}` : 'Tất cả'
-              })`,
+              label: `Tự động (${activeCourse?.course_name || ''} - Hạng ${detectedCourseClass || 'Tất cả'})`,
             },
-            { id: 'B1', label: 'Hạng B1 (Lên khóa B.01K260...)' },
-            { id: 'B2', label: 'Hạng B2 (Lên khóa BK260...)' },
-            { id: 'C1', label: 'Hạng C1 (Lên khóa C1K260...)' },
-            { id: 'ALL', label: 'Xem tất cả các hạng (B1 + B2 + C1)' },
+            { id: 'B1', label: 'Hạng B1 (B.01K...)' },
+            { id: 'B2', label: 'Hạng B2 (BK...)' },
+            { id: 'C1', label: 'Hạng C1 (C1K...)' },
+            { id: 'ALL', label: 'Tất cả (B1+B2+C1)' },
           ].map((btn) => (
             <button
               key={btn.id}
               type="button"
               onClick={() => setClassFilterMode(btn.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 whitespace-nowrap transition cursor-pointer ${
                 classFilterMode === btn.id
                   ? 'bg-blue-800 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300'

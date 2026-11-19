@@ -31,7 +31,7 @@ export default function AttentionBanner({ attentionReport, compact = false, onOp
         {onOpenFullTab && (
           <button
             onClick={onOpenFullTab}
-            className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg shrink-0"
+            className="w-full sm:w-auto px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg shrink-0 mt-2 sm:mt-0 cursor-pointer text-center"
           >
             Xem chi tiết nhóm cần chú ý
           </button>
@@ -42,7 +42,7 @@ export default function AttentionBanner({ attentionReport, compact = false, onOp
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
         <div className="flex items-center gap-3 mb-2">
           <ShieldAlert className="w-6 h-6 text-red-600" />
           <h2 className="text-lg font-bold text-slate-900">

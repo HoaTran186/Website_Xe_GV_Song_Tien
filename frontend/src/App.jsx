@@ -149,7 +149,7 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-2.5 sm:px-4 py-3 sm:py-6">
         {initialLoading && courses.length === 0 ? (
           <div className="bg-white rounded-xl p-12 text-center text-slate-500 shadow-sm border border-slate-200">
             Đang tải dữ liệu hệ thống Quản lý Xe & Giáo viên Sông Tiền...
